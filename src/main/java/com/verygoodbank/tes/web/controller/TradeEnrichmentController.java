@@ -1,7 +1,7 @@
 package com.verygoodbank.tes.web.controller;
 
 
-import com.verygoodbank.tes.service.TradeEnrichmentService;
+import com.verygoodbank.tes.service.TradeEnrichmentServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class TradeEnrichmentController {
 
-    private final TradeEnrichmentService tradeEnrichmentService;
+    private final TradeEnrichmentServiceImpl tradeEnrichmentService;
 
     @PostMapping(value = "/enrich", produces = "text/csv")
     public ResponseEntity<String> uploadAndEnrichTradeData(@RequestParam("file") MultipartFile file) {

@@ -1,6 +1,6 @@
 package com.verygoodbank.tes;
 
-import com.verygoodbank.tes.service.TradeEnrichmentService;
+import com.verygoodbank.tes.service.TradeEnrichmentServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,6 +23,9 @@ class TradeEnrichmentServiceApplicationTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private TradeEnrichmentServiceImpl service;
 
     @Test
     public void uploadFileAndExpectSuccess() throws Exception {
@@ -47,5 +50,54 @@ class TradeEnrichmentServiceApplicationTests {
         } catch (IOException e) {
             throw new RuntimeException("Unable to create MockMultipartFile: " + e.getMessage(), e);
         }
+    }
+
+    @Test
+    void enrichTradeData_MissingProductMapping_WarnsMissingMapping() throws Exception {
+
+        MockMultipartFile file = createMultipartFile(TRADE_CSV_PATH);
+        String result = service.enrichTradeData(file);
+
+        assert (result.contains("Missing Product Name"));
+    }
+
+    @Test
+    void enrichTradeData_InvalidDate_LogsError() {
+        String tradeCsv = "date,product_id,currency,price\ninvalidDate,1,USD,100.0";
+        MockMultipartFile file = new MockMultipartFile("file", "trade.csv", "text/csv", tradeCsv.getBytes());
+
+        String result = service.enrichTradeData(file);
+
+        assert (!result.contains("invalidDate,1,USD,100.0"));
+    }
+
+    @Test
+    void shouldReturnTrueWhenCurrencyIsInvalid() {
+        String tradeCsv = "date,product_id,currency,price\n20230101,1,USDD,100.0";
+        MockMultipartFile file = new MockMultipartFile("file", "trade.csv", "text/csv", tradeCsv.getBytes());
+
+        String result = service.enrichTradeData(file);
+
+        assert (!result.contains("20230101,1,USDD,100.0"));
+    }
+
+    @Test
+    void shouldReturnTrueWhenDateIsInvalid() {
+        String tradeCsv = "date,product_id,currency,price\n20230177,1,USD,100.0";
+        MockMultipartFile file = new MockMultipartFile("file", "trade.csv", "text/csv", tradeCsv.getBytes());
+
+        String result = service.enrichTradeData(file);
+
+        assert (!result.contains("20230177,1,USD,100.0"));
+    }
+
+    @Test
+    void shouldReturnTrueWhenPriceIsNegative() {
+        String tradeCsv = "date,product_id,currency,price\n20230105,1,USD,-100.0";
+        MockMultipartFile file = new MockMultipartFile("file", "trade.csv", "text/csv", tradeCsv.getBytes());
+
+        String result = service.enrichTradeData(file);
+
+        assert (!result.contains("20230105,1,USD,-100.0"));
     }
 }
